@@ -126,7 +126,7 @@ EOF
 python3 -m venv /config/ha/pymodbus/.venv
 source /config/ha/pymodbus/.venv/bin/activate
 pip install --upgrade pip
-pip install "pymodbus==3.1.2"
+pip install pymodbus==3.1.2 pyserial
 
 echo "[GoodWe] ✅ Installatie klaar!"
 echo "Ga nu in Supervisor → Add-ons → Local Add-ons en installeer 'GoodWe Agent'."
