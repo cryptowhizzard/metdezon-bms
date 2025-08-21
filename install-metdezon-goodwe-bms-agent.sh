@@ -30,12 +30,10 @@ cat > $ADDON_DIR/Dockerfile <<'EOF'
 ARG BUILD_FROM
 FROM $BUILD_FROM
 
-# Zorg dat we Python en pip hebben
 RUN apk add --no-cache python3 py3-pip bash
 
 WORKDIR /usr/src/app
 
-# Kopieer scripts
 COPY run.sh /run.sh
 COPY goodwe_agent.py /goodwe_agent.py
 
@@ -58,12 +56,12 @@ import os, time, requests, subprocess
 
 server_url = os.environ.get("SERVER_URL", "http://api.metdezon.nl/bms_mode")
 
-# Mode mapping
+# Correcte mapping server → GoodWe
 mode_map = {
-    7: 1,
-    4: 3,
-    1: 1,
-    3: 2,
+    7: 1,  # server Auto → GoodWe Auto
+    4: 2,  # server Charge → GoodWe Charge
+    1: 1,  # server Auto → GoodWe Auto
+    3: 3,  # server Discharge → GoodWe Discharge
 }
 
 def set_mode(mode, power=0):
@@ -124,11 +122,11 @@ client.close()
 print(f"Set mode {mode} {'with power ' + str(power) + 'W' if power else ''}")
 EOF
 
-# 7. Install venv + pymodbus
+# 7. Install venv + juiste pymodbus versie
 python3 -m venv /config/ha/pymodbus/.venv
 source /config/ha/pymodbus/.venv/bin/activate
 pip install --upgrade pip
-pip install pymodbus
+pip install "pymodbus==3.1.2"
 
-echo "[GoodWe] Installatie klaar!"
+echo "[GoodWe] ✅ Installatie klaar!"
 echo "Ga nu in Supervisor → Add-ons → Local Add-ons en installeer 'GoodWe Agent'."
