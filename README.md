@@ -1,2 +1,2 @@
-# metdezon-bms-solaredge
-MetDeZon SolarEdge BMS Homeassistant
+# metdezon-bms
+MetDeZon BMS Homeassistant
