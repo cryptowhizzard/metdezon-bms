@@ -61,9 +61,9 @@ server_url = os.environ.get("SERVER_URL", "http://api.metdezon.nl/bms_mode")
 # Mode mapping
 mode_map = {
     7: 1,
-    4: 2,
+    4: 3,
     1: 1,
-    3: 3,
+    3: 2,
 }
 
 def set_mode(mode, power=0):
