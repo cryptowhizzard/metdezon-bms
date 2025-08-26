@@ -1,0 +1,43 @@
+{
+  "name": "MetDeZon BMS Agent",
+  "version": "0.3.0",
+  "slug": "metdezon_bms_agent",
+  "description": "Stuurt SolarEdge BMS aan via centrale API (zonder Home Assistant)",
+  "arch": ["amd64", "aarch64", "armv7"],
+  "startup": "services",
+  "boot": "auto",
+  "init": false,
+  "stage": "experimental",
+  "host_network": true,
+  "map": ["config:rw"],
+  "options": {
+    "api_key": "",
+    "client_id": 1,
+
+    "api_url": "https://api.metdezon.nl/bms/api/next_action.php",
+    "telemetry_url": "https://api.metdezon.nl/bms/api/heartbeat.php",
+
+    "inv_ip": "",
+    "ctrl_dir": "/config/ha/solaredge-battery-control",
+    "interval_sec": 60,
+
+    "debug": 1,
+    "verify_ssl": true
+  },
+  "schema": {
+    "api_key": "str?",
+    "client_id": "int",
+
+    "api_url": "str",
+    "telemetry_url": "str",
+
+    "inv_ip": "str",
+    "ctrl_dir": "str",
+    "interval_sec": "int",
+
+    "debug": "int",
+    "verify_ssl": "bool"
+  },
+  "homeassistant_api": false
+}
+

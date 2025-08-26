@@ -1,0 +1,52 @@
+{
+  "name": "GoodWe Agent",
+  "version": "1.1.1",
+  "slug": "goodwe_agent",
+  "description": "Bridge central server mode",
+  "startup": "services",
+  "boot": "auto",
+  "homeassistant_api": true,
+  "hassio_api": true,
+  "stage": "experimental",
+  "arch": ["aarch64", "armv7", "amd64"],
+  "init": false,
+  "host_network": false,
+  "uart": true,
+  "usb": true,
+  "map": ["config:rw"],
+  "devices": ["/dev/ttyUSB0:/dev/ttyUSB0:rwm"],
+  "options": {
+    "api_url": "https://api.metdezon.nl/bms/api/next_action.php",
+    "telemetry_url": "https://api.metdezon.nl/bms/api/heartbeat.php",
+    "api_key": "",
+    "poll_interval": 60,
+    "power_watt": 5000,
+    "soc_entity": "sensor.battery_state_of_charge",
+    "mode_entity": "",
+    "telemetry_url": "https://api.metdezon.nl/bms/api/telemetry.php",
+    "serial_port": "/dev/ttyUSB0",
+    "serial_baud": 9600,
+    "serial_slave": 247,
+    "debug": 1,
+
+    "ha_url": "http://homeassistant:8123/api",
+    "ha_token": ""
+  },
+  "schema": {
+    "api_url": "str",
+    "api_key": "str",
+    "poll_interval": "int",
+    "power_watt": "int",
+    "soc_entity": "str",
+    "mode_entity": "str?",
+    "telemetry_url": "str?",
+    "serial_port": "str",
+    "serial_baud": "int",
+    "serial_slave": "int",
+    "debug": "int",
+
+    "ha_url": "str?",
+    "ha_token": "str?"
+  }
+}
+
