@@ -100,4 +100,3 @@ fi
 
 echo "[GoodWe] Start agent: API_URL=$API_URL interval=${POLL_INTERVAL}s power=$POWER_WATT"
 exec python3 /app/goodwe_agent.py
-➜  goodwe_agent 
