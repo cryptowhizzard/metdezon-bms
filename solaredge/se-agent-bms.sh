@@ -1,3 +1,4 @@
+cat se-agent-bms.sh 
 #!/bin/bash
 # se-agent-bms.sh — SolarEdge BMS agent (Posts SOC → asks action → applies; verbose logs)
 
@@ -91,7 +92,20 @@ case "$MODE" in
   *) MODE_NAME="Mode $MODE";;
 esac
 
-log "Local inverter: SOC=${SOC_SHOW}% mode=${MODE} (${MODE_NAME})"
+# ====== NEW: derive PV and GRID powers (scaled) ======
+# pv_ac_w  = inverter AC output power in W (scaled by power_ac_scale)
+# pv_dc_w  = inverter DC input power in W (scaled by power_dc_scale)
+# grid_w   = site net power from Meter1 in W (negative = export, positive = import)
+PV_AC_W="$( echo "$SOC_RAW" | jq -r 'if (.power_ac==null) then empty else (.power_ac * (pow(10; (.power_ac_scale // 0)))) end' || true )"
+PV_DC_W="$( echo "$SOC_RAW" | jq -r 'if (.power_dc==null) then empty else (.power_dc * (pow(10; (.power_dc_scale // 0)))) end' || true )"
+GRID_W="$(  echo "$SOC_RAW" | jq -r 'if (.meters.Meter1.power==null) then empty else (.meters.Meter1.power * (pow(10; (.meters.Meter1.power_scale // 0)))) end' || true )"
+
+# Round a bit for pretty logs (do not alter payload precision)
+PV_AC_SHOW="$( [ -n "${PV_AC_W:-}" ] && printf '%.1f' "$PV_AC_W" || echo 'n/a' )"
+PV_DC_SHOW="$( [ -n "${PV_DC_W:-}" ] && printf '%.1f' "$PV_DC_W" || echo 'n/a' )"
+GRID_SHOW="$(  [ -n "${GRID_W:-}"  ] && printf '%.1f' "$GRID_W"  || echo 'n/a' )"
+
+log "Local inverter: SOC=${SOC_SHOW}% mode=${MODE} (${MODE_NAME}) PV_AC=${PV_AC_SHOW}W PV_DC=${PV_DC_SHOW}W GRID=${GRID_SHOW}W (neg=export,pos=import)"
 
 # ================= 2) Post heartbeat (telemetry) =================
 # battery_mode in the DB should reflect the *policy* we are/just were using.
@@ -103,12 +117,17 @@ HB_JSON="$(jq -n \
   --argjson ts "$(date +%s)" \
   --arg soc "${SOC_VAL:-}" \
   --arg bm "$BM" \
+  --arg pvac "${PV_AC_W:-}" \
+  --arg pvdc "${PV_DC_W:-}" \
+  --arg grid "${GRID_W:-}" \
   '
   {
     client_id: $cid,
     reported_at: $ts,
     soc: ( ($soc|tonumber?) ),
-    battery_mode: ( ($bm|tonumber?) )
+    battery_mode: ( ($bm|tonumber?) ),
+    pv_power_w: ( ($pvac|tonumber?) ),
+    grid_power_w:  ( ($grid|tonumber?) )
   }
   '
 )"
@@ -163,12 +182,18 @@ HB2_JSON="$(jq -n \
   --argjson ts "$(date +%s)" \
   --arg soc "${SOC_VAL:-}" \
   --arg bm "$MODE_NEW" \
+  --arg pvac "${PV_AC_W:-}" \
+  --arg pvdc "${PV_DC_W:-}" \
+  --arg grid "${GRID_W:-}" \
   '
   {
     client_id: $cid,
     reported_at: $ts,
     soc: ( ($soc|tonumber?) ),
-    battery_mode: ( ($bm|tonumber?) )
+    battery_mode: ( ($bm|tonumber?) ),
+    pv_ac_w: ( ($pvac|tonumber?) ),
+    pv_dc_w: ( ($pvdc|tonumber?) ),
+    grid_w:  ( ($grid|tonumber?) )
   }
   '
 )"
@@ -179,3 +204,4 @@ else
   log "WARN: Heartbeat(policy) HTTP $HTTP_TEL2 body=$(head -c 200 /tmp/hb2.out)"
 fi
 
+[core-ssh metdezon-bms]$ 
