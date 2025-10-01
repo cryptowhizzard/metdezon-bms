@@ -96,7 +96,7 @@ fi
 
 "$VENV/bin/python" -m pip install --upgrade pip setuptools wheel >/dev/null 2>&1 || true
 # gefixeerde versie die bij jou werkt
-"$VENV/bin/python" -m pip install "pymodbus==3.1.2"
+"$VENV/bin/python" -m pip install "pymodbus==3.1.2" "pyserial"
 
 echo "[GoodWe] Start agent: API_URL=$API_URL interval=${POLL_INTERVAL}s power=$POWER_WATT"
 exec python3 /app/goodwe_agent.py
