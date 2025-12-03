@@ -1,0 +1,12 @@
+{
+  "domain": "dwars_epex",
+  "name": "Dwars EPEX",
+  "version": "0.0.1",
+  "documentation": "https://www.dwars-energie.nl/dwars-epex",
+  "requirements": [],
+  "dependencies": [],
+  "codeowners": ["@cryptowhizzard"],
+  "iot_class": "cloud_polling",
+  "loggers": ["custom_components.dwars_epex"]
+}
+
