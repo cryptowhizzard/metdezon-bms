@@ -1,4 +1,3 @@
-cat se-agent-bms.sh 
 #!/bin/bash
 # se-agent-bms.sh — SolarEdge BMS agent (Posts SOC → asks action → applies; verbose logs)
 
@@ -18,8 +17,8 @@ INTERVAL="${INTERVAL:-60}"
 DEBUG="${DEBUG:-0}"
 VERIFY_SSL="${VERIFY_SSL:-true}"
 
-VENV="$CTRL_DIR/venv"
-PYTHON="$VENV/bin/python"
+# Gebruik gewoon systeem-Python in de container
+PYTHON="python3"
 PIP="$PYTHON -m pip"
 SCRIPT="$CTRL_DIR/se_battery_control.py"
 INFO_SNAPSHOT="$CTRL_DIR/last_info.json"
@@ -29,29 +28,23 @@ CURL_TLS=()
 
 log(){ echo "[BMS] $(date '+%F %T') $*"; }
 
-# jq for JSON parsing (idempotent)
+# jq voor JSON parsing (idempotent; extra apk add kan geen kwaad)
 apk add --no-cache jq >/dev/null 2>&1 || true
 
-# --- Ensure control dir and venv exist ---
+# --- Ensure control dir exists ---
 if [ ! -d "$CTRL_DIR" ]; then
   log "ERROR: Control dir $CTRL_DIR not found"
   exit 1
 fi
-if [ ! -d "$VENV" ]; then
-  log "INFO: venv ontbreekt → aanmaken…"
-  python3 -m venv "$VENV"
-fi
-
-# --- Ensure pip in venv ---
-if ! $PYTHON -m pip --version >/dev/null 2>&1; then
-  log "INFO: pip ontbreekt in venv → ensurepip…"
-  $PYTHON -m ensurepip --upgrade >/dev/null 2>&1 || true
-fi
 
 # --- Ensure dependencies for the control script (if it has requirements.txt) ---
-if [ -f "$CTRL_DIR/requirements.txt" ]; then
-  $PIP install --upgrade pip setuptools wheel >/dev/null 2>&1 || true
-  $PIP install -r "$CTRL_DIR/requirements.txt" >/dev/null 2>&1 || true
+# Doe dit max 1x per container-start om het licht te houden
+DEPS_MARKER="$CTRL_DIR/.deps_installed"
+if [ -f "$CTRL_DIR/requirements.txt" ] && [ ! -f "$DEPS_MARKER" ]; then
+  log "INFO: Installing/updating Python deps from requirements.txt…"
+  $PIP install --break-system-packages --upgrade pip setuptools wheel >/dev/null 2>&1 || true
+  $PIP install --break-system-packages -r "$CTRL_DIR/requirements.txt" >/dev/null 2>&1 || true
+  touch "$DEPS_MARKER" || true
 fi
 
 # --- Helper to run se_battery_control.py in its folder (so config.yaml is found) ---
@@ -92,15 +85,11 @@ case "$MODE" in
   *) MODE_NAME="Mode $MODE";;
 esac
 
-# ====== NEW: derive PV and GRID powers (scaled) ======
-# pv_ac_w  = inverter AC output power in W (scaled by power_ac_scale)
-# pv_dc_w  = inverter DC input power in W (scaled by power_dc_scale)
-# grid_w   = site net power from Meter1 in W (negative = export, positive = import)
+# ====== PV en GRID powers (geschaald) ======
 PV_AC_W="$( echo "$SOC_RAW" | jq -r 'if (.power_ac==null) then empty else (.power_ac * (pow(10; (.power_ac_scale // 0)))) end' || true )"
 PV_DC_W="$( echo "$SOC_RAW" | jq -r 'if (.power_dc==null) then empty else (.power_dc * (pow(10; (.power_dc_scale // 0)))) end' || true )"
 GRID_W="$(  echo "$SOC_RAW" | jq -r 'if (.meters.Meter1.power==null) then empty else (.meters.Meter1.power * (pow(10; (.meters.Meter1.power_scale // 0)))) end' || true )"
 
-# Round a bit for pretty logs (do not alter payload precision)
 PV_AC_SHOW="$( [ -n "${PV_AC_W:-}" ] && printf '%.1f' "$PV_AC_W" || echo 'n/a' )"
 PV_DC_SHOW="$( [ -n "${PV_DC_W:-}" ] && printf '%.1f' "$PV_DC_W" || echo 'n/a' )"
 GRID_SHOW="$(  [ -n "${GRID_W:-}"  ] && printf '%.1f' "$GRID_W"  || echo 'n/a' )"
@@ -108,8 +97,6 @@ GRID_SHOW="$(  [ -n "${GRID_W:-}"  ] && printf '%.1f' "$GRID_W"  || echo 'n/a' )
 log "Local inverter: SOC=${SOC_SHOW}% mode=${MODE} (${MODE_NAME}) PV_AC=${PV_AC_SHOW}W PV_DC=${PV_DC_SHOW}W GRID=${GRID_SHOW}W (neg=export,pos=import)"
 
 # ================= 2) Post heartbeat (telemetry) =================
-# battery_mode in the DB should reflect the *policy* we are/just were using.
-# If you prefer to store the *current local mode*, set BM="$MODE". For server policy, overwrite later.
 BM="$MODE"
 
 HB_JSON="$(jq -n \
@@ -203,5 +190,3 @@ if [[ "$HTTP_TEL2" =~ ^2 ]]; then
 else
   log "WARN: Heartbeat(policy) HTTP $HTTP_TEL2 body=$(head -c 200 /tmp/hb2.out)"
 fi
-
-[core-ssh metdezon-bms]$ 
