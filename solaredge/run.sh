@@ -30,3 +30,15 @@ while true; do
   sleep "${INTERVAL}"
 done
 
+# venv + pymodbus==3.1.2 (self-heal)
+if [ ! -d "$VENV" ]; then
+  python3 -m venv "$VENV"
+fi
+
+if ! "$VENV/bin/python" -m pip --version >/dev/null 2>&1; then
+  "$VENV/bin/python" -m ensurepip --upgrade || true
+fi
+
+"$VENV/bin/python" -m pip install --upgrade pip setuptools wheel >/dev/null 2>&1 || true
+# gefixeerde versie die bij jou werkt
+"$VENV/bin/python" -m pip install "pymodbus==3.1.2" "pyserial"
