@@ -1,0 +1,44 @@
+{
+  "name": "Sungrow Agent",
+  "version": "1.0.0",
+  "slug": "sungrow_agent",
+  "description": "MetDeZon EMS bridge for Sungrow SHx inverters via Home Assistant",
+  "startup": "services",
+  "boot": "auto",
+  "homeassistant_api": true,
+  "hassio_api": true,
+  "stage": "experimental",
+  "arch": ["aarch64", "armv7", "amd64"],
+  "init": false,
+  "host_network": false,
+  "map": ["config:rw"],
+  "options": {
+    "api_url": "https://api.metdezon.nl/bms/api/next_action.php",
+    "telemetry_url": "https://api.metdezon.nl/bms/api/telemetry.php",
+    "api_key": "",
+    "poll_interval": 60,
+    "power_watt": 5000,
+    "soc_entity": "sensor.battery_level",
+    "mode_entity": "",
+    "pv_entity": "sensor.total_dc_power",
+    "grid_entity": "sensor.meter_active_power",
+    "debug": 1,
+    "ha_url": "http://homeassistant:8123/api",
+    "ha_token": ""
+  },
+  "schema": {
+    "api_url": "str",
+    "api_key": "str",
+    "poll_interval": "int",
+    "power_watt": "int",
+    "soc_entity": "str",
+    "mode_entity": "str?",
+    "pv_entity": "str?",
+    "grid_entity": "str?",
+    "telemetry_url": "str?",
+    "debug": "int",
+    "ha_url": "str?",
+    "ha_token": "str?"
+  }
+}
+
